@@ -1,0 +1,42 @@
+from flask_restx import Namespace, Resource
+from flask import request
+import functions.mongodb as mongodb
+import functions.utils as utils
+
+api = Namespace('faq', description='Faq related operations')
+
+@api.route("/")
+class faqs(Resource):
+    def get(self):
+        documents = mongodb.all_documents()
+        return utils.send_json(documents)
+    
+    def post(self):
+        inserted_document = mongodb.insert_document(request.json)
+        report_id = str(inserted_document.inserted_id)
+        return utils.send_json({"msg": "faq entry succefully saved in db.", "inserted_id": report_id})
+    
+@api.route("/id/<id>")
+class faq(Resource):
+    def get(self, id):
+        document = mongodb.find_document(id)
+        return utils.send_json(document) if ( (isinstance(document, dict)) and (len(document) != 0) ) else utils.send_json({})
+        return utils.send_json(document)
+    
+    def delete(self, id):
+        deleted_doc = mongodb.delete_decument(id)
+        msg = "document succesfully deleted" if deleted_doc.deleted_count == 1 else "no document found for deletion"
+        return utils.send_json({"msg": msg})
+    
+    def put(self, id):
+        body = request.get_json(force=True, silent=True)
+        update = utils.check_body(body)
+        if (len(update) == 0):
+            return utils.send_json({"status": "fail", "msg": "update query empty, please provide non empty json object"})
+        updated_doc = mongodb.update_document(id, update)
+        msg = ""
+        if updated_doc.matched_count == 0:
+            msg = "no document found for update"
+        else:
+            msg = "document succesfully updated" if updated_doc.modified_count == 1 else "document found but no modifications done"
+        return utils.send_json({"msg": msg})

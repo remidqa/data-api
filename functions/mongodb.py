@@ -7,7 +7,14 @@ load_dotenv()
 
 mongodb_srv = os.environ.get("MONGODB_SRV")
 
+enabled_collections = [
+    "experiences",
+    "faq"
+]
+
 def get_mongo_collection(coll):
+    if coll not in enabled_collections:
+        return f'collection "{coll}" has unauthorized access or doesn\'t exists. You must choose between : {", ".join(enabled_collections)}'
     client = MongoClient(mongodb_srv)
     db = client["data"]
     collection = db[coll]
@@ -20,7 +27,10 @@ def find_document(coll, id):
 
 def all_documents(coll):
     collection = get_mongo_collection(coll)
-    documents = collection.find()
+    if coll == "experiences":
+        documents = collection.find().sort([("dateStart.y", -1), ("dateStart.m",-1)])
+    else:
+        documents = collection.find()
     docs =[]
     for doc in documents:
         docs.append(doc)

@@ -10,7 +10,7 @@ jobs:
   full:
     uses: remidqa/qa-configurations/.github/workflows/build-deploy-test.yml@main
     with:
-      APP: cy-runner
+      APP: data-api
       ENV: preview
     secrets:
       DOCKER_USER: ${{ secrets.DOCKER_USER }}
